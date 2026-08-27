@@ -438,6 +438,7 @@ io.on('connection', (socket) => {
     ensureMobs(state.x || 0, state.y || 0);
     const others = Object.fromEntries([...players].filter(([id]) => id !== socket.id).map(([id, player]) => [id, compactState(player)]));
     socket.emit('welcome', { id: socket.id, players: others, buildings: Object.fromEntries(buildings), worldSeed, resHp: {}, mobs: [...mobs.values()].map(publicMob), isHost: players.size === 1 });
+    socket.emit('mob_ids', [...mobs.keys()]);
     socket.broadcast.emit('player_join', { id: socket.id, state: compactState(state) });
     broadcastOnlineCount();
   });

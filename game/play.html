@@ -11030,8 +11030,8 @@ function drawGroundDetailsDirect(c) {
   if (minY < -WORLD) c.fillRect(minX, minY, maxX - minX, -WORLD - minY);
   if (maxY > WORLD) c.fillRect(minX, WORLD, maxX - minX, maxY - WORLD);
   // ── Sploop.io / MooMoo.io Style Crisp Razor-Sharp Grid ──
-  c.strokeStyle = 'rgba(0, 0, 0, 0.08)';
-  c.lineWidth = 1.2;
+  c.strokeStyle = 'rgba(0, 0, 0, 0.14)';
+  c.lineWidth = Math.max(0.9, 1.2 / ZOOM);
   c.beginPath();
   for (let x = minX; x <= maxX; x += GRID_SIZE) {
     c.moveTo(x, minY);
@@ -13958,6 +13958,7 @@ function initMultiplayer() {
   _socket.on('mob_ids', (ids) => {
     if (!Array.isArray(ids)) return;
     _mobIdArr = ids; // keep for binary mob_states_b index decoding
+      if (ids.length === 0) return;
     const idSet = new Set(ids);
     for (let i = enemies.length - 1; i >= 0; i--) {
       if (enemies[i]._netId && !idSet.has(enemies[i]._netId)) enemies.splice(i, 1);

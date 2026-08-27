@@ -10761,7 +10761,7 @@ function drawPlayer() {
   }
 
   // HP bar above player — always visible
-  drawHpBar(0, -player.radius - 18, player.hp, player.maxHp, 64, 0, true);
+  drawHpBar(0, player.radius + 14, player.hp, player.maxHp, 64, 0, true);
 
   // Name + 12-sided rank badge (own player) — deferred to screen-space pass
   // PERF: pool-based push — reuse pre-allocated object instead of new {} each frame
@@ -11018,10 +11018,12 @@ function drawGroundDetailsDirect(c) {
   const GRID_SIZE = 80;
   const halfW = (canvas.width / 2) / ZOOM + 120;
   const halfH = (canvas.height / 2) / ZOOM + 120;
-  const minX = Math.floor((camX - halfW) / GRID_SIZE) * GRID_SIZE;
-  const maxX = Math.ceil((camX + halfW) / GRID_SIZE) * GRID_SIZE;
-  const minY = Math.floor((camY - halfH) / GRID_SIZE) * GRID_SIZE;
-  const maxY = Math.ceil((camY + halfH) / GRID_SIZE) * GRID_SIZE;
+  const viewCenterX = camX + canvas.width / 2;
+  const viewCenterY = camY + canvas.height / 2;
+  const minX = Math.floor((viewCenterX - halfW) / GRID_SIZE) * GRID_SIZE;
+  const maxX = Math.ceil((viewCenterX + halfW) / GRID_SIZE) * GRID_SIZE;
+  const minY = Math.floor((viewCenterY - halfH) / GRID_SIZE) * GRID_SIZE;
+  const maxY = Math.ceil((viewCenterY + halfH) / GRID_SIZE) * GRID_SIZE;
 
   c.save();
   c.fillStyle = '#5aaa38';
@@ -14468,7 +14470,7 @@ function drawOtherPlayers() {
 
     // HP bar
     const hpPct = _hpRatio;
-    const bw = 54, bh = 7, bxBar = p.x - bw / 2, byBar = p.y - 72;
+    const bw = 54, bh = 7, bxBar = p.x - bw / 2, byBar = p.y + 45;
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.beginPath(); ctx.roundRect(bxBar, byBar, bw, bh, 4); ctx.fill();
     ctx.fillStyle = hpPct > 0.5 ? '#44df22' : hpPct > 0.25 ? '#f5c842' : '#e03333';

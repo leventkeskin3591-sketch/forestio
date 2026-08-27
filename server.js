@@ -395,6 +395,7 @@ setInterval(() => {
         mob.nextAttackAt = now + 900;
         mob.chaseUntil = now + MOB_CHASE_TIMEOUT;
         io.to(target.id).emit('mob_attack', { dmg: mob.dmg, hp: target.hp, typeName: mob.typeName });
+        io.emit('players', { [target.id]: compactState(target) });
       }
     } else {
       mob.targetId = null;
@@ -490,6 +491,7 @@ io.on('connection', (socket) => {
       target.hp = Math.max(0, (target.hp ?? 250) - damage);
       io.to(targetId).emit('pvp_hit', { dmg: damage, fromName: attacker.name || 'Oyuncu' });
       io.to(targetId).emit('self_state', { hp: target.hp });
+      io.emit('players', { [targetId]: compactState(target) });
       socket.emit('pvp_confirm', { targetId, dmg: damage, targetName: target.name || 'Oyuncu' });
       if (target.hp <= 0) {
         target.kills = target.kills || 0;
@@ -513,6 +515,7 @@ io.on('connection', (socket) => {
     target.hp = Math.max(0, (target.hp ?? 250) - damage);
     io.to(data.targetId).emit('pvp_hit', { dmg: damage, fromName: attacker.name || 'Oyuncu' });
     io.to(data.targetId).emit('self_state', { hp: target.hp });
+    io.emit('players', { [data.targetId]: compactState(target) });
     socket.emit('pvp_confirm', { targetId: data.targetId, dmg: damage, targetName: target.name || 'Oyuncu' });
     if (target.hp <= 0) {
       target.kills = target.kills || 0;
@@ -534,6 +537,7 @@ io.on('connection', (socket) => {
     target.hp = Math.max(0, (target.hp ?? 250) - damage);
     io.to(data.targetId).emit('pvp_hit', { dmg: damage, fromName: owner?.name || 'Diken' });
     io.to(data.targetId).emit('self_state', { hp: target.hp });
+    io.emit('players', { [data.targetId]: compactState(target) });
     socket.emit('spike_dmg_confirm', { targetId: data.targetId, dmg: damage, targetName: target.name || 'Oyuncu' });
     if (target.hp <= 0 && owner) {
       target.kills = target.kills || 0;

@@ -4816,7 +4816,7 @@ function _onGridToggle(checked) {
   localStorage.setItem('fb_grid_show', checked ? 'true' : 'false');
 }
 
-let _sfxMuted = false;
+let _sfxMuted = localStorage.getItem('fb_sfx_muted') === 'true';
 function _onSfxToggle(checked) {
   _sfxMuted = !checked;
   localStorage.setItem('fb_sfx_muted', _sfxMuted ? 'true' : 'false');
@@ -6704,7 +6704,7 @@ var _sndThrottle={};
 var _activeAudioVoices = 0;
 const MAX_ACTIVE_VOICES = 10;
 function playSound(freq,dur,type,vol){
-  if(!_audio||_audio.state!=='running'||!_soundEnabled) return;
+  if(!_audio||_audio.state!=='running'||_sfxMuted) return;
   if(_activeAudioVoices >= MAX_ACTIVE_VOICES) return;
   _activeAudioVoices++;
   setTimeout(function(){ if(_activeAudioVoices > 0) _activeAudioVoices--; }, Math.min(Math.round((dur||0.1)*1000)+30, 800));

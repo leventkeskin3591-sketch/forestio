@@ -9774,7 +9774,7 @@ function drawEnemy(e) {
       const _ocTTL = _qualityLevel === 0 ? 10 : _qualityLevel === 1 ? 8 : 5;
       if (!flash && e._ocKey === _mCKey && (globalTime - e._ocAge) < _ocTTL) {
         ctx.drawImage(e._oc, -(e._oc.width >> 1), -(e._oc.width >> 1));
-      } else if (!flash) {
+      } else if (!flash && typeof OffscreenCanvas !== 'undefined') {
         const _cw = Math.max(4, (R * 3.2) | 0);
         if (!e._oc || e._oc.width !== _cw) e._oc = new OffscreenCanvas(_cw, _cw);
         const _occ = e._oc.getContext('2d');
@@ -11018,12 +11018,17 @@ function drawGroundDetailsDirect(c) {
   const GRID_SIZE = 80;
   const halfW = (canvas.width / 2) / ZOOM + 120;
   const halfH = (canvas.height / 2) / ZOOM + 120;
-  const minX = Math.max(-WORLD, Math.floor((camX - halfW) / GRID_SIZE) * GRID_SIZE);
-  const maxX = Math.min(WORLD, Math.ceil((camX + halfW) / GRID_SIZE) * GRID_SIZE);
-  const minY = Math.max(-WORLD, Math.floor((camY - halfH) / GRID_SIZE) * GRID_SIZE);
-  const maxY = Math.min(WORLD, Math.ceil((camY + halfH) / GRID_SIZE) * GRID_SIZE);
+  const minX = Math.floor((camX - halfW) / GRID_SIZE) * GRID_SIZE;
+  const maxX = Math.ceil((camX + halfW) / GRID_SIZE) * GRID_SIZE;
+  const minY = Math.floor((camY - halfH) / GRID_SIZE) * GRID_SIZE;
+  const maxY = Math.ceil((camY + halfH) / GRID_SIZE) * GRID_SIZE;
 
   c.save();
+  c.fillStyle = '#5aaa38';
+  if (minX < -WORLD) c.fillRect(minX, minY, -WORLD - minX, maxY - minY);
+  if (maxX > WORLD) c.fillRect(WORLD, minY, maxX - WORLD, maxY - minY);
+  if (minY < -WORLD) c.fillRect(minX, minY, maxX - minX, -WORLD - minY);
+  if (maxY > WORLD) c.fillRect(minX, WORLD, maxX - minX, maxY - WORLD);
   // ── Sploop.io / MooMoo.io Style Crisp Razor-Sharp Grid ──
   c.strokeStyle = 'rgba(0, 0, 0, 0.08)';
   c.lineWidth = 1.2;

@@ -13,6 +13,16 @@ const clans = new Map();
 const sessions = new Map();
 const mobs = new Map();
 const mobHitCooldowns = new Map();
+const MOB_TYPES = [
+  { shape: 'goblin', color: '#5f9f35', outline: '#1e4216', eyes: '#ffee00', typeName: 'Orman Goblini', radius: 32, hp: 180, dmg: 12 },
+  { shape: 'slime', color: '#51c95b', outline: '#176b25', eyes: '#ffffff', typeName: 'Yesil Balcik', radius: 30, hp: 150, dmg: 10 },
+  { shape: 'bat', color: '#514477', outline: '#241b3e', eyes: '#ff6677', typeName: 'Magara Yarasi', radius: 28, hp: 130, dmg: 14 },
+  { shape: 'boar', color: '#9b633b', outline: '#4a2815', eyes: '#fff0c2', typeName: 'Yaban Domuzu', radius: 38, hp: 240, dmg: 16 },
+  { shape: 'mushroom', color: '#d84b35', outline: '#6d1e17', eyes: '#fff4cc', typeName: 'Zehirli Mantar', radius: 30, hp: 170, dmg: 13 },
+  { shape: 'spider', color: '#34333b', outline: '#14141a', eyes: '#ff3344', typeName: 'Orman Orumcegi', radius: 34, hp: 190, dmg: 15 },
+  { shape: 'skeleton', color: '#c9c4ad', outline: '#5e5a4d', eyes: '#ff5c3d', typeName: 'Kemik Savasci', radius: 32, hp: 210, dmg: 18 },
+  { shape: 'cobra', color: '#b56b32', outline: '#572b16', eyes: '#ffe45c', typeName: 'Col Kobrasi', radius: 30, hp: 160, dmg: 17 },
+];
 const dataFile = process.env.DATA_FILE || path.join(__dirname, 'forest-data.json');
 const authSecret = process.env.AUTH_SECRET || 'forestbrawl-auth-secret-change-me';
 let worldSeed = Math.floor(Math.random() * 0x7fffffff);
@@ -326,15 +336,16 @@ function publicMob(mob) {
 }
 
 function createMob(anchorX, anchorY) {
+  const type = MOB_TYPES[(nextMobId - 1) % MOB_TYPES.length];
   const angle = Math.random() * Math.PI * 2;
   const distance = 260 + Math.random() * 520;
   const maxCoord = 4300;
   const x = Math.max(-maxCoord, Math.min(maxCoord, anchorX + Math.cos(angle) * distance));
   const y = Math.max(-maxCoord, Math.min(maxCoord, anchorY + Math.sin(angle) * distance));
   const mob = {
-    id: `mob-${nextMobId++}`, x, y, vx: 0, vy: 0, radius: MOB_RADIUS,
-    hp: 180, maxHp: 180, color: '#5f9f35', outline: '#1e4216', shape: 'goblin',
-    eyes: '#ffee00', typeName: 'Orman Goblini', dmg: 12, xpReward: 25, goldReward: 5,
+    id: `mob-${nextMobId++}`, x, y, vx: 0, vy: 0, radius: type.radius || MOB_RADIUS,
+    hp: type.hp, maxHp: type.hp, color: type.color, outline: type.outline, shape: type.shape,
+    eyes: type.eyes, typeName: type.typeName, dmg: type.dmg, xpReward: 25, goldReward: 5,
     nextAttackAt: 0, wanderAngle: angle, targetId: null, chaseUntil: 0,
   };
   mobs.set(mob.id, mob);

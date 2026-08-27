@@ -4857,9 +4857,7 @@ function _initGameSettingsUI() {
   });
   _onMinimapToggle(minimapVisible);
   _onFpsToggle(fpsVisible);
-  _updateKeybindsButtonsUI();
 }
-_initGameSettingsUI();
 
 // ============================================================
 // KEYBINDINGS SYSTEM
@@ -4882,6 +4880,8 @@ try {
   const _savedKb = localStorage.getItem('fb_keybinds');
   if (_savedKb) _customKeybinds = Object.assign({}, DEFAULT_KEYBINDS, JSON.parse(_savedKb));
 } catch(e) {}
+
+_initGameSettingsUI();
 
 let _listeningKeybindAction = null;
 

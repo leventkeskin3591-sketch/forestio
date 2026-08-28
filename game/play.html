@@ -6352,6 +6352,7 @@ function updateArrows(){
 }
 function drawArrows(){
   for(let _ai=0;_ai<arrows.length;_ai++){const a=arrows[_ai];
+    if(a.x<_renderCullL-40||a.x>_renderCullR+40||a.y<_renderCullT-40||a.y>_renderCullB+40) continue;
     // Trail
     ctx.save();
     var _atLen=a._tLen;
@@ -6460,7 +6461,10 @@ function updateArmorDrops(){
   for(let i=armorDrops.length-1;i>=0;i--){
     const a=armorDrops[i];
     a.life--;
-    if(Math.hypot(player.x-a.x,player.y-a.y)<player.radius+a.r+8){
+    const dx = player.x - a.x, dy = player.y - a.y;
+    const collectR = player.radius + a.r + 8;
+    if(Math.abs(dx) > collectR || Math.abs(dy) > collectR) continue;
+    if(Math.hypot(dx,dy)<collectR){
       const gain=0.08; player.armorBonus=Math.min(0.5,(player.armorBonus||0)+gain);
       floatingTexts.push({x:a.x,y:a.y-25,text:`🛡️ ZIRH +${Math.round(gain*100)}%`,alpha:1,life:55,color:'#88ccff'});
       playSound(660,0.1,'triangle',0.18);

@@ -5779,7 +5779,10 @@ function updateLoots() {
     const l = loots[i];
     l.life--;
     // Auto-collect when player is close
-    const dist = Math.hypot(player.x - l.x, player.y - l.y);
+    const dx = player.x - l.x, dy = player.y - l.y;
+    const collectR = player.radius + l.radius + 10;
+    if (Math.abs(dx) > collectR || Math.abs(dy) > collectR) continue;
+    const dist = Math.hypot(dx, dy);
     if (dist < player.radius + l.radius + 10) {
       player.gold += l.amount; player.score = (player.score||0) + l.amount * 2; updateUI();
       floatingTexts.push({ x:l.x, y:l.y-20, text:`+${l.amount}💰 +${l.amount*2}⭐`, alpha:1, life:32, color:'#ffd700' });
@@ -5849,7 +5852,10 @@ function updateChests() {
     const c = chests[i];
     c.pulse += 0.05;
     c.life--;
-    const dist = Math.hypot(player.x - c.x, player.y - c.y);
+    const dx = player.x - c.x, dy = player.y - c.y;
+    const collectR = player.radius + CHEST_COLLECT_RADIUS;
+    if (Math.abs(dx) > collectR || Math.abs(dy) > collectR) continue;
+    const dist = Math.hypot(dx, dy);
     if (dist < player.radius + CHEST_COLLECT_RADIUS) {
       const gold = 60 + Math.floor(Math.random() * 141); // 60-200 gold
       const mult = (_activeMapEvent && _activeMapEvent.effect === 'gold2x') ? 2 : 1;
@@ -6613,7 +6619,9 @@ let _campfires = [];
 function updateCampfires(){
   for(let _cfi=0;_cfi<_campfires.length;_cfi++){const b=_campfires[_cfi];
     if(b.hp<=0)continue;
-    const dist=Math.hypot(player.x-b.x,player.y-b.y);
+    const dx = player.x - b.x, dy = player.y - b.y;
+    if (Math.abs(dx) > 180 || Math.abs(dy) > 180) continue;
+    const dist=Math.hypot(dx,dy);
     if(dist<180){
       if(!b._healTimer)b._healTimer=0;
       b._healTimer--;

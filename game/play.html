@@ -2054,6 +2054,7 @@ const _gridPad = 320;
 let _gridOC = null, _gridOCCtx = null;
 let _gridCacheCamX = -999999, _gridCacheCamY = -999999;
 let _gridCacheZoom = -1, _gridCacheQuality = -1, _gridCacheTint = '';
+let _gridPattern = null, _gridPatternZoom = -1;
 
 // Background offscreen canvas — drawn ONCE at init, blitted every frame.
 // Eliminates ~14 createRadialGradient / createLinearGradient calls per frame.
@@ -11018,18 +11019,21 @@ function drawGroundDetailsDirect(c) {
   if (minY < -WORLD) c.fillRect(minX, minY, maxX - minX, -WORLD - minY);
   if (maxY > WORLD) c.fillRect(minX, WORLD, maxX - minX, maxY - WORLD);
   // ── Sploop.io style: seyrek ve düşük kontrastlı oyun ızgarası ──
-  c.strokeStyle = 'rgba(0, 0, 0, 0.07)';
-  c.lineWidth = Math.max(0.6, 0.85 / ZOOM);
-  c.beginPath();
-  for (let x = minX; x <= maxX; x += GRID_SIZE) {
-    c.moveTo(x, minY);
-    c.lineTo(x, maxY);
+  if (!_gridPattern || Math.abs(_gridPatternZoom - ZOOM) > 0.01) {
+    const _gridTile = document.createElement('canvas');
+    _gridTile.width = GRID_SIZE; _gridTile.height = GRID_SIZE;
+    const _gridTileCtx = _gridTile.getContext('2d');
+    _gridTileCtx.strokeStyle = 'rgba(0, 0, 0, 0.07)';
+    _gridTileCtx.lineWidth = Math.max(0.6, 0.85 / ZOOM);
+    _gridTileCtx.beginPath();
+    _gridTileCtx.moveTo(0, 0); _gridTileCtx.lineTo(GRID_SIZE, 0);
+    _gridTileCtx.moveTo(0, 0); _gridTileCtx.lineTo(0, GRID_SIZE);
+    _gridTileCtx.stroke();
+    _gridPattern = c.createPattern(_gridTile, 'repeat');
+    _gridPatternZoom = ZOOM;
   }
-  for (let y = minY; y <= maxY; y += GRID_SIZE) {
-    c.moveTo(minX, y);
-    c.lineTo(maxX, y);
-  }
-  c.stroke();
+  c.fillStyle = _gridPattern;
+  c.fillRect(minX, minY, maxX - minX, maxY - minY);
 
   // ── Biome Divider Line ──
   const B = BIOME_BORDER;

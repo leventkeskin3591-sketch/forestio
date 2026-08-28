@@ -2045,6 +2045,10 @@ let _mmFrameCnt = 0; // throttle dynamic minimap dots
 const _mmDotCanvas = document.createElement('canvas');
 _mmDotCanvas.width = 128; _mmDotCanvas.height = 128;
 const _mmDotCtx    = _mmDotCanvas.getContext('2d');
+const _mmBaseCanvas = document.createElement('canvas');
+_mmBaseCanvas.width = 128; _mmBaseCanvas.height = 128;
+const _mmBaseCtx = _mmBaseCanvas.getContext('2d');
+let _mmBaseReady = false;
 
 // ── Static world layer OC: grid + biome borders + zone labels + walls ────────
 // Rebuilt only when camera moves beyond overdraw padding or zoom/quality changes.
@@ -5693,7 +5697,7 @@ function drawMinimap() {
   // persist between frames. Old code ran clearRect every frame then skipped
   // dot redraw 2/3 frames → dots vanished → visible flash every ~0.05 sec.
   _mmFrameCnt++;
-  if (_mmFrameCnt % 6 === 0) {
+  if (!_mmBaseReady || _mmFrameCnt % 6 === 0) {
     _mmDotCtx.clearRect(0, 0, S, S);
     // Resources — fillRect instead of arc (3× faster for small dots at minimap scale)
     // _MM_RES_COLOR is module-level constant; dotSz replaces arc radius with rect half-size
@@ -5737,12 +5741,15 @@ function drawMinimap() {
       if (mx < 0 || mx > S || my < 0 || my > S) continue;
       _mmDotCtx.beginPath(); _mmDotCtx.arc(mx, my, 2, 0, Math.PI*2); _mmDotCtx.fill();
     }
+    _mmBaseCtx.clearRect(0, 0, S, S);
+    _mmBaseCtx.drawImage(_mmBgCanvas, 0, 0);
+    _mmBaseCtx.drawImage(_mmDotCanvas, 0, 0);
+    _mmBaseReady = true;
   }
 
-  // ── Composite every frame: bg + cached dot layer + player ────────────────
+  // ── Composite every frame: cached base + player ──────────────────────────
   mmCtx.clearRect(0, 0, S, S);
-  mmCtx.drawImage(_mmBgCanvas, 0, 0);
-  mmCtx.drawImage(_mmDotCanvas, 0, 0);
+  mmCtx.drawImage(_mmBaseCanvas, 0, 0);
 
   // Player triangle — always drawn fresh so rotation stays smooth (inline coords)
   const _pmx = (player.x + _mmOff) * MM_SCALE, _pmy = (player.y + _mmOff) * MM_SCALE;
@@ -8144,6 +8151,14 @@ function _getWmOC(tier, _mp, tpL, tpD, tpA, tpB) {
 // a re-render with the new tier palette.
 const _wmOC = new Map();
 const _bldSC = new Map();
+const _B_TIER_PALETTES = [
+  ['#b0b0b0','#787878','#e0e0e0','#9e9e9e','#333333','#aaaaaa'],
+  ['#f5c842','#c9920c','#fff9c4','#f57f17','#5a3000','#ffd700'],
+  ['#64b5f6','#1565c0','#e3f2fd','#0288d1','#0a2d6b','#42a8f5'],
+  ['#ba68c8','#6a1b9a','#f3e5f5','#9c27b0','#2c0050','#e040fb'],
+  ['#66bb6a','#1b5e20','#b9f6ca','#00c853','#003300','#00e676'],
+  ['#e8eaf6','#7986cb','#ffffff','#c5cae9','#1a237e','#ffffff'],
+];
 function _getBldSC(key, w, h, cx, cy, drawFn) {
   if (_bldSC.has(key)) return _bldSC.get(key);
   const oc = new OffscreenCanvas(w, h);
@@ -8162,14 +8177,7 @@ function drawBuilding(b, ghost) {
   if (ghost) ctx.globalAlpha = 0.45;
 
   const _bTier = _getTier(b);
-  const _TP = [
-    ['#b0b0b0','#787878','#e0e0e0','#9e9e9e','#333333','#aaaaaa'],
-    ['#f5c842','#c9920c','#fff9c4','#f57f17','#5a3000','#ffd700'],
-    ['#64b5f6','#1565c0','#e3f2fd','#0288d1','#0a2d6b','#42a8f5'],
-    ['#ba68c8','#6a1b9a','#f3e5f5','#9c27b0','#2c0050','#e040fb'],
-    ['#66bb6a','#1b5e20','#b9f6ca','#00c853','#003300','#00e676'],
-    ['#e8eaf6','#7986cb','#ffffff','#c5cae9','#1a237e','#ffffff'],
-  ][_bTier] || ['#b0b0b0','#787878','#e0e0e0','#9e9e9e','#333333','#aaaaaa'];
+  const _TP = _B_TIER_PALETTES[_bTier] || _B_TIER_PALETTES[0];
   const [tpL, tpD, tpA, tpAD, tpB, tpG] = _TP;
 
   if (b.type === 3) { // ══ SPIKE — completely different geometry per tier ══

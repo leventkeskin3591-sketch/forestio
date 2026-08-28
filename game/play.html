@@ -6533,7 +6533,8 @@ function drawAmbientParticles(){
   // Pass 1: ash circles — no save/restore needed
   let _apLastCol = null;
   for(let _api=0;_api<ambientParticles.length;_api++){
-    const p=ambientParticles[_api]; if(p.shape!=='ash') continue;
+    const p=ambientParticles[_api];
+    if(p.shape!=='ash'||p.x<_renderCullL||p.x>_renderCullR||p.y<_renderCullT||p.y>_renderCullB) continue;
     if(p.color!==_apLastCol){ ctx.fillStyle=p.color; _apLastCol=p.color; }
     ctx.globalAlpha=Math.min(1,p.life/60)*0.455;
     ctx.beginPath(); ctx.arc(p.x,p.y,p.r*0.6,0,Math.PI*2); ctx.fill();
@@ -6543,7 +6544,8 @@ function drawAmbientParticles(){
   if(_qualityLevel>=2) ctx.shadowBlur=6;
   _apLastCol=null;
   for(let _api=0;_api<ambientParticles.length;_api++){
-    const p=ambientParticles[_api]; if(p.shape!=='spore') continue;
+    const p=ambientParticles[_api];
+    if(p.shape!=='spore'||p.x<_renderCullL||p.x>_renderCullR||p.y<_renderCullT||p.y>_renderCullB) continue;
     if(p.color!==_apLastCol){
       ctx.fillStyle=p.color;
       if(_qualityLevel>=2) ctx.shadowColor=p.color;
@@ -6557,7 +6559,7 @@ function drawAmbientParticles(){
   // Pass 3: complex shapes (leaf, snow, other) — still need rotate
   for(let _api=0;_api<ambientParticles.length;_api++){
     const p=ambientParticles[_api];
-    if(p.shape==='ash'||p.shape==='spore') continue;
+    if(p.shape==='ash'||p.shape==='spore'||p.x<_renderCullL||p.x>_renderCullR||p.y<_renderCullT||p.y>_renderCullB) continue;
     const al=Math.min(1,p.life/60)*0.65;
     ctx.save(); ctx.globalAlpha=al; ctx.fillStyle=p.color; ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=0.5;
     ctx.translate(p.x,p.y); ctx.rotate(p.angle);

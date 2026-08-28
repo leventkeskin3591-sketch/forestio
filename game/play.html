@@ -3536,7 +3536,7 @@ function _sgRebuild() {
   }
   for (var _ri2 = 0; _ri2 < resources.length; _ri2++) {
     var _rr = resources[_ri2];
-    if (!_rr || _rr._destroyed || _rr.hp <= 0) continue;
+    if (!_rr || _rr._destroyed) continue;
     var _rcx = (_rr.x / _SG_CELL) | 0, _rcy = (_rr.y / _SG_CELL) | 0;
     var _rk = _sgKey(_rcx, _rcy);
     var _rbucket = _resBuckets.get(_rk);
@@ -4651,7 +4651,7 @@ function pickResDef(biome, rng) {
 function makeResource(x, y, rng) {
   const biome = getBiome(x, y);
   const d = pickResDef(biome, rng);
-  const HP_MUL = 1; // resources use raw hp values for visible bar feedback
+  const HP_MUL = 1;
   const hp = Math.round(d.hp * HP_MUL);
   return { x, y, radius: d.radius, biome,
     type: d.type, hp, maxHp: hp, shake: 0,
@@ -4673,10 +4673,7 @@ function _rebuildResourcesFromSeed(seed, resHpOverrides) {
     const y = (rng() * 2 - 1) * r;
     const res = makeResource(x, y, rng);
     res._netIdx = i;
-    if (resHpOverrides && resHpOverrides[i] !== undefined) {
-      res.hp = resHpOverrides[i];
-      if (res.hp <= 0) res._destroyed = true;
-    }
+    res.hp = res.maxHp;
     resources.push(res);
   }
 }
@@ -5276,13 +5273,13 @@ function showBuildUpgradePanel(b) {
   _bup_building = b;
   _refreshBuildUpgradePanel();
   const pnl = document.getElementById('build-upg-panel');
-  pnl.classList.add('open');
+  pnl.classList.add('bup-open');
   // Pause resize for 300ms so CSS panel open animation cannot trigger canvas resize on iOS
   _resizePauseUntil = Date.now() + 300;
 }
 function hideBuildUpgradePanel() {
   _bup_building = null;
-  document.getElementById('build-upg-panel').classList.remove('open');
+  document.getElementById('build-upg-panel').classList.remove('bup-open');
 }
 function _refreshBuildUpgradePanel() {
   if (!_bup_building) return;
@@ -6120,7 +6117,7 @@ function checkHits() {
 
       // HIT this resource — bu swing için kilitle
       res.lastHitSwingId = _swingId;
-      res.hp -= dmg; res.shake = 5; res.shakeAng = player.angle + Math.PI;
+      res.shake = 5; res.shakeAng = player.angle + Math.PI;
       // In online mode: notify server so all players see the damage
       if (_connected && _socket && res._netIdx !== undefined && res._netIdx >= 0) {
         _socket.emit('res_hit', { idx: res._netIdx, dmg });
@@ -6165,17 +6162,6 @@ function checkHits() {
       }
       player.xp += harvest;
       updateUI(); updateXP();
-      if (res.hp <= 0) {
-        const labels = { wood:'🌲 Devrildi!', stone:'🪨 Kırıldı!', gold:'✨ Tükendi!', apple:'🍎 Bitti!', bush:'🌿 Yok oldu!', mushroom:'🍄 Toplandı!', crystal:'💎 Kırıldı!', hive:'🍯 Yıkıldı!' };
-        floatingTexts.push({ x: res.x, y: res.y, text: labels[res.type] || '💥', alpha:1, life:50, color:'#ffeb3b' });
-        if (_connected) {
-          res._destroyed = true; // server manages respawn; keep slot stable
-        } else {
-          respawnQueue.push({ x: res.x, y: res.y, timer: 18 }); // ~18 seconds
-          const _rIdx = resources.indexOf(res);
-          if (_rIdx >= 0) resources.splice(_rIdx, 1);
-        }
-      }
     }
   }
 
@@ -11015,7 +11001,7 @@ function _interpOtherPlayers() {
 }
 
 function drawGroundDetailsDirect(c) {
-  const GRID_SIZE = 80;
+  const GRID_SIZE = 100;
   const halfW = (canvas.width / 2) / ZOOM + 120;
   const halfH = (canvas.height / 2) / ZOOM + 120;
   const viewCenterX = camX + canvas.width / 2;
@@ -11031,9 +11017,9 @@ function drawGroundDetailsDirect(c) {
   if (maxX > WORLD) c.fillRect(WORLD, minY, maxX - WORLD, maxY - minY);
   if (minY < -WORLD) c.fillRect(minX, minY, maxX - minX, -WORLD - minY);
   if (maxY > WORLD) c.fillRect(minX, WORLD, maxX - minX, maxY - WORLD);
-  // ── Sploop.io / MooMoo.io Style Crisp Razor-Sharp Grid ──
-  c.strokeStyle = 'rgba(0, 0, 0, 0.14)';
-  c.lineWidth = Math.max(0.9, 1.2 / ZOOM);
+  // ── Sploop.io style: seyrek ve düşük kontrastlı oyun ızgarası ──
+  c.strokeStyle = 'rgba(0, 0, 0, 0.07)';
+  c.lineWidth = Math.max(0.6, 0.85 / ZOOM);
   c.beginPath();
   for (let x = minX; x <= maxX; x += GRID_SIZE) {
     c.moveTo(x, minY);
@@ -11047,8 +11033,8 @@ function drawGroundDetailsDirect(c) {
 
   // ── Biome Divider Line ──
   const B = BIOME_BORDER;
-  c.strokeStyle = 'rgba(0, 0, 0, 0.12)';
-  c.lineWidth = 2.5;
+  c.strokeStyle = 'rgba(0, 0, 0, 0.08)';
+  c.lineWidth = 1.5;
   c.strokeRect(-B, -B, B * 2, B * 2);
 
   // ── Map Red Border Walls ──
@@ -11603,7 +11589,6 @@ function update(timestamp = 0) {
         for (let ri = 0; ri < _resNear.length; ri++) {
           const res = _resNear[ri];
           if (!res || res.hp === undefined || res.radius === undefined) continue;
-          if (res.hp <= 0) continue;
           const rdx = e.x - res.x, rdy = e.y - res.y;
           const minD = e.radius + res.radius * 0.9;
           // PERF: Component-wise fast reject — skips ~97% of resources with 2 comparisons before any multiply
@@ -11901,26 +11886,11 @@ function update(timestamp = 0) {
         // Kaynağa hasar ver (1.2 saniyede bir)
         if (now - e.lastResHit > 1200) {
           const resDmg = Math.max(1, Math.round(e.dmg * 0.3));
-          res.hp -= resDmg;
           res.shake = 5;
           e.lastResHit = now;
           // Server-authoritative: notify server so all players see mob-caused resource damage
           if (_connected && _socket && res._netIdx !== undefined && res._netIdx >= 0) {
             _socket.emit('res_hit', { idx: res._netIdx, dmg: resDmg });
-          }
-          floatingTexts.push({ x: res.x + (Math.random()-0.5)*20, y: res.y - res.radius - 8,
-            text: '-' + resDmg, alpha: 1, life: 25, color: '#ff7722' });
-          if (res.hp <= 0) {
-            const lbls = { wood:'🌲 Devrildi!', stone:'🪨 Kırıldı!', gold:'✨ Tükendi!', apple:'🍎 Bitti!', bush:'🌿 Yok oldu!' };
-            floatingTexts.push({ x: res.x, y: res.y, text: lbls[res.type] || '💥', alpha: 1, life: 50, color: '#ffeb3b' });
-            if (_connected) {
-              res._destroyed = true;
-            } else {
-              respawnQueue.push({ x: res.x, y: res.y, timer: 18 });
-              // Mark now and remove in one compact pass after all mob
-              // interactions; the grid/query remains structurally valid.
-              res._destroyed = true;
-            }
           }
         }
       }
@@ -12491,7 +12461,6 @@ function update(timestamp = 0) {
     const rx = res.x + sX, ry = res.y + sY;
     const biome = res.biome || 'forest';
     const R = res.radius;
-    const hp = (res.hp / res.maxHp);
     const t = globalTime;
     const _resourceImage = _resourceSprite(res.type, biome);
 
@@ -12511,22 +12480,6 @@ function update(timestamp = 0) {
         ctx.drawImage(baked.cnv, -baked.pad, -baked.pad);
         ctx.restore();
       }
-    }
-    if (res.hp < res.maxHp && res.maxHp > 0) {
-      const pct = Math.max(0, Math.min(1, res.hp / res.maxHp));
-      const bx = res.x, by = res.y - R - 16;
-      const bw = Math.max(48, R * 1.1), bh = 8;
-      const barColor = _RES_HP_COLORS[res.type] || '#aaa';
-      ctx.fillStyle = 'rgba(0,0,0,0.65)'; // eslint-disable-line no-unused-expressions
-      ctx.beginPath(); ctx.roundRect(bx - bw/2 - 2, by - 2, bw + 4, bh + 4, 4); ctx.fill();
-      if (pct > 0) {
-        ctx.fillStyle = barColor;
-        ctx.beginPath(); ctx.roundRect(bx - bw/2, by, bw * pct, bh, 3); ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.28)';
-        ctx.beginPath(); ctx.roundRect(bx - bw/2 + 1, by + 1, Math.max(0, bw * pct - 2), 3, 2); ctx.fill();
-      }
-      ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1.2;
-      ctx.beginPath(); ctx.roundRect(bx - bw/2 - 2, by - 2, bw + 4, bh + 4, 4); ctx.stroke();
     }
   } // end resources for-loop
 
@@ -13829,18 +13782,7 @@ function initMultiplayer() {
   _socket.on('res_sync', ({ idx, hp, shake }) => {
     const res = resources[idx];
     if (!res) return;
-    // Already destroyed locally — do not resurrect; only res_respawn can restore
-    if (res._destroyed) return;
-    // Server is authoritative for HP decreases only.
-    // Using Math.min prevents latency race where server echoes a *higher* HP
-    // (because the server's res_hit arrived before an earlier local hit was processed),
-    // which previously caused the "HP jumping up" visual bug.
-    res.hp = Math.min(res.hp, hp);
-    if (res.hp <= 0) {
-      res._destroyed = true;
-      const labels = { wood:'🌲 Devrildi!', stone:'🪨 Kırıldı!', gold:'✨ Tükendi!', apple:'🍎 Bitti!', bush:'🌿 Yok oldu!', mushroom:'🍄 Toplandı!', crystal:'💎 Kırıldı!', hive:'🍯 Yıkıldı!' };
-      floatingTexts.push({ x: res.x, y: res.y, text: labels[res.type] || '💥', alpha:1, life:50, color:'#ffeb3b' });
-    } else if (shake) {
+    if (shake) {
       res.shake = Math.max(res.shake || 0, 5);
       if (!res.shakeAng) res.shakeAng = 0;
     }

@@ -578,7 +578,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('res_hit', (data = {}) => {
-    relayToOthers(socket, 'res_sync', { idx: data.idx, hp: data.hp, dmg: data.dmg, shake: true });
+    relayToOthers(socket, 'res_sync', { idx: data.idx, shake: true });
   });
 
   socket.on('mob_hit_req', (data = {}) => {
